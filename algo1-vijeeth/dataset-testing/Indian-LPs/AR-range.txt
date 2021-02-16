@@ -1,0 +1,3 @@
+The Aspect-ratio range used for indian number plates is:
+
+2.9 <= AR <= 5.99

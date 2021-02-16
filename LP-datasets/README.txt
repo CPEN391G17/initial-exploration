@@ -4,7 +4,7 @@ The dataset contains of :
 	* Variable angles         - 16 images
 * North American License Plates:
 	* Straight Back angle     - 20 images
-        * Variable angles         - 11 images
+        * Variable angles         - 12 images
 
 
 Let's test our software on this dataseta, and record the number of correct LP localizations for :

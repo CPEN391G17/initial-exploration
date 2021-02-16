@@ -5,7 +5,7 @@ import numpy as np
 import pytesseract
 import re
 
-def correct_LP(text):
+def clean_LPNum(text):
     result = re.search(r"[a-zA-z0-9]+", text)
     if len(result.group(0)) > 7:
         print("The length is not 7 even after cleaning")
@@ -100,7 +100,7 @@ plt.show()
 '''
 
 text = pytesseract.image_to_string(Cropped, config='--psm 11')
-text = correct_LP(text)
+text = clean_LPNum(text)
 print("programming_fever's License Plate Recognition\n")
 print("Detected license plate Number is:", text)
 

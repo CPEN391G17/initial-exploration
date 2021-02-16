@@ -4,17 +4,54 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytesseract
 import re
-
-def clean_LPNum(text):
-    result = re.search(r"[a-zA-z0-9]+", text)
-    if len(result.group(0)) > 7:
-        print("The length is not 7 even after cleaning")
-
-    return result.group(0)
+import os
 
 
-def crop_plate(img,kernel):
+def getListOfFiles(dirName):
+    # create a list of file and sub directories
+    # names in the given directory
+    listOfFile = os.listdir(dirName)
+    allFiles = list()
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(dirName, entry)
+        # If entry is a directory then get the list of files in this directory
+        if os.path.isdir(fullPath):
+            allFiles = allFiles + getListOfFiles(fullPath)
+        else:
+            allFiles.append(fullPath)
+
+    return allFiles
+
+def clean_LPNum(text, LP_type):
+    if (LP_type == "IN"):
+        num_groups = 4
+    elif (LP_type == "NA"):
+        num_groups = 6
+    else:
+        num_groups = 6
+
+    result = re.search("[a-zA-Z0-9.: ]+", text)
+    if (result == None):
+        return ""
+    if len(result.groups()) > num_groups:
+        print("The num. groups is ", num_groups, " even after cleaning")
+
+    return result.group()
+
+
+def crop_plate(img, kernel, LP_type):
     plate_img = img.copy()
+    if (LP_type == "IN"):
+        classifier_addr = r"C:\Users\souno\GitRepos\CPEN391\so_algo\indian_license_plate.xml"
+    elif (LP_type == "NA"):
+        classifier_addr = r"C:\Users\souno\GitRepos\CPEN391\so_algo\haarcascade_russian_plate_number.xml"
+    else:
+        classifier_addr = r"C:\Users\souno\GitRepos\CPEN391\so_algo\haarcascade_russian_plate_number.xml"
+
+    # Cascade Classifier where our hundres of samples of license plates are
+    plate_cascade = cv2.CascadeClassifier(classifier_addr)
 
     # gets the points of where the classifier detects a plate
     plate_rects = plate_cascade.detectMultiScale(plate_img, scaleFactor=1.2, minNeighbors=10)
@@ -32,82 +69,57 @@ def crop_plate(img,kernel):
         zoom_img = plate_img[y_offset:y_end, x_offset:x_end]
     return zoom_img
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+def main(img_addr, LP_type):
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+    img = None
+    cropped = None
+    text = None
+    img = cv2.imread(img_addr, cv2.IMREAD_COLOR)
 
-img = cv2.imread(r"C:\Users\souno\GitRepos\CPEN391\so_algo\test1.jpeg", cv2.IMREAD_COLOR)
-#img = cv2.resize(img, (600, 400))
-#cv2.imshow('car', img)
+    kernel = np.array([[-1,-1,-1],
+                       [-1,9,-1],
+                       [-1,-1,-1]])
 
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-gray = cv2.bilateralFilter(gray, 13, 15, 15)
+    cropped = crop_plate(img, kernel, LP_type)
 
+    text = pytesseract.image_to_string(cropped, config='--psm 11')
+    print("Raw text: ",text)
 
-edged = cv2.Canny(gray, 30, 200)
-#cv2.imshow('edge detection', edged)
-contours = cv2.findContours(edged.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-contours = imutils.grab_contours(contours)
-contours = sorted(contours, key=cv2.contourArea, reverse=True)[:10]
-screenCnt = None
-
-#print(contours)
-for c in contours:
-
-    peri = cv2.arcLength(c, True)
-    approx = cv2.approxPolyDP(c, 5, True)
-    if len(approx) == 4:
-        screenCnt = approx
-        break
-
-'''
-if screenCnt is None:
-    detected = 0
-    print("No contour detected")
-else:
-    detected = 1
-
-if detected == 1:
-    cv2.drawContours(img, [screenCnt], -1, (0, 0, 255), 3)
+    text = clean_LPNum(text, LP_type)
+    print("programming_fever's License Plate Recognition")
+    print("Detected license plate Number is:", text, "\n")
 
 
-mask = np.zeros(gray.shape, np.uint8) #create a blank mask
-new_image = cv2.drawContours(mask, [screenCnt], 0, 255, -1) #pass mask, contour
-new_image = cv2.bitwise_and(img, img, mask=mask) #overlay mask over actual img
-plt.imshow(cv2.cvtColor(new_image, cv2.COLOR_BGR2RGB))
-plt.show()
+    #cv2.imshow('car', img)
+    fig, axs = plt.subplots(2)
+    fig.suptitle('Car and the cropped image')
+    axs[0].imshow(img)
+    axs[1].imshow(cropped)
+    cv2.imshow('car', cropped)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
-'''
+if __name__ == "__main__":
+    # execute only if run as a script
+    img_addr = r"C:\Users\souno\GitRepos\CPEN391\so_algo\test1.jpeg"
+    LP_type = "NA"
 
-# Cascade Classifier where our hundres of samples of license plates are
-plate_cascade = cv2.CascadeClassifier(
-    #r"C:\Users\souno\GitRepos\CPEN391\so_algo\indian_license_plate.xml"
-    r"C:\Users\souno\GitRepos\CPEN391\so_algo\haarcascade_russian_plate_number.xml"
-)
+    mypath = r"C:\Users\souno\GitRepos\CPEN391\LP-datasets"
+    allFiles = getListOfFiles(mypath)
+    print(allFiles)
 
+    print(".jpg" in allFiles[1])
+    for filepath in allFiles:
+        if ".jpg" in filepath:
+            print(filepath)
+            if "NA-LPs" in filepath:
+                main(filepath, "NA")
+            elif "Indian-LPs" in filepath:
+                main(filepath, "IN")
+            cv2.waitKey(0)
 
-kernel = np.array([[-1,-1,-1],
-                   [-1,9,-1],
-                   [-1,-1,-1]])
-
-Cropped = crop_plate(img, kernel)
-'''
-# Cropping
-(x, y) = np.where(mask == 255)
-(topx, topy) = (np.min(x), np.min(y))
-(bottomx, bottomy) = (np.max(x), np.max(y))
-Cropped = gray[topx:bottomx + 1, topy:bottomy + 1]
-plt.imshow(cv2.cvtColor(Cropped, cv2.COLOR_BGR2RGB))
-plt.show()
-'''
-
-text = pytesseract.image_to_string(Cropped, config='--psm 11')
-text = clean_LPNum(text)
-print("programming_fever's License Plate Recognition\n")
-print("Detected license plate Number is:", text)
-
-img = cv2.resize(img, (500, 300))
-Cropped = cv2.resize(Cropped, (400, 200))
-cv2.imshow('car', img)
-cv2.imshow('Cropped', Cropped)
-
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    '''
+    img_addr
+    LP_type (choose one from the list) = {"IN", "NA"}
+    '''
+    #main(img_addr, LP_type)

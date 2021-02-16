@@ -4,7 +4,7 @@ import numpy as np
 import imutils
 import easyocr
 
-img = cv2.imread('img/image2.jpg') #read image
+img = cv2.imread('img/NA-LPs/variable-angle/NA_var_11.jpg') #read image
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) #grayscale/recoloured img BGR->Gray
 plt.imshow(cv2.cvtColor(gray, cv2.COLOR_BGR2RGB)) #converted to show since matplot expects a BGR image
 plt.show()
@@ -46,7 +46,7 @@ plt.show()
 
 reader = easyocr.Reader(['en'])
 result = reader.readtext(cropped_image)
-result
+print(result)
 
 text = result[0][-2]
 font = cv2.FONT_HERSHEY_SIMPLEX

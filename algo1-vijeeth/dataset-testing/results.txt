@@ -1,0 +1,10 @@
+Indian LP
+     - back-angle localization accuracy      = 11/25  = 44%
+     - variable-angle localization accuracy  = 6/16   = 38%
+
+NA LP
+     - back-angle localization accuracy      = 12/20  = 60%
+     - variable-angle localization accuracy  = 4/12   = 33%
+
+
+Overall localization accuracy                = 33/73  = 45%

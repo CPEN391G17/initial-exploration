@@ -52,7 +52,9 @@ def find_character_contour(sorted_contours, im2, thresh):
 def add_missed_chars(sorted_contours, cnts, im2, thresh):
     for cnt in sorted_contours:
         x,y,w,h = cv2.boundingRect(cnt)
-        height, width = im2.shape
+        ratio = h / float(w)
+        # if height to width ratio is less than 1.5 skip
+        if ratio < 1.5: continue
         height_threshold = h / 10.0
         present = False
         add = False
